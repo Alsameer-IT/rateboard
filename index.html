@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Rate Board</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .nav-tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .add-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .form-group input {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #219a52);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            min-width: 800px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+
+        th {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        th.clickable {
+            cursor: pointer;
+        }
+
+        th.clickable:hover {
+            background: linear-gradient(135deg, #3e5a73, #34495e);
+        }
+
+        th:first-child {
+            text-align: left;
+        }
+
+        td:first-child {
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .editable-input {
+            width: 100%;
+            max-width: 120px;
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            text-align: center;
+            background: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .editable-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            transform: scale(1.05);
+        }
+
+        .currency-input {
+            font-weight: bold;
+            color: #27ae60;
+            background: linear-gradient(135deg, #f8fff8, #e8f5e8);
+        }
+
+        .agent-input {
+            background: linear-gradient(135deg, #fff8f0, #f0e8d8);
+        }
+
+        .last-edited {
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .calculation-result {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .calculation-result h3 {
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        .calc-table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.95);
+            margin-top: 20px;
+        }
+
+        .calc-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #2c3e50;
+        }
+
+        .calc-table th {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 15px;
+            font-weight: 500;
+        }
+
+        .calc-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .calc-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .currency-rate {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #27ae60;
+        }
+
+        .whatsapp-btn {
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .whatsapp-btn:hover {
+            background: #128c7e;
+            transform: scale(1.05);
+        }
+
+        .floating-calculate-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .floating-calculate-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 35px rgba(231, 76, 60, 0.6);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #27ae60;
+            box-shadow: 0 0 10px rgba(39, 174, 96, 0.5);
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+            transform: scale(1.05);
+        }
+
+        .rate-checkbox {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .tab-content {
+                padding: 15px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            th, td {
+                padding: 8px 5px;
+                font-size: 0.85rem;
+            }
+
+            .editable-input {
+                max-width: 80px;
+                padding: 6px 8px;
+                font-size: 0.9rem;
+            }
+
+            .floating-calculate-btn {
+                bottom: 20px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+        }
+
+        .agent-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .agent-name {
+            font-weight: bold;
+        }
+
+        .agent-subtitle {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .modal-content h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 1.5rem;
+        }
+
+        .number-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .number-item input {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .number-item input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .number-item button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn {
+            background: #3498db;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #2980b9;
+        }
+
+        .remove-btn {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .remove-btn:hover {
+            background: #c0392b;
+        }
+
+        .add-number {
+            background: #27ae60;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .add-number:hover {
+            background: #219a52;
+        }
+
+        .modal-actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💱 Currency Rate Board</h1>
+            <p>Professional Exchange Rate Management System</p>
+            <div style="margin-top: 15px;">
+                <span class="status-indicator status-online"></span>
+                <span id="connectionStatus">Connected</span>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('rates')">Rate Management</button>
+            <button class="nav-tab" onclick="switchTab('calculations')">Final Calculations</button>
+        </div>
+
+        <div id="ratesTab" class="tab-content active">
+            <div class="add-section">
+                <h3 style="margin-bottom: 20px; color: #2c3e50;">🏳️ Add New Country</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Country Name</label>
+                        <input type="text" id="countryName" placeholder="e.g., India">
+                    </div>
+                    <div class="form-group">
+                        <label>Base Currency Rate</label>
+                        <input type="number" id="currencyRate" placeholder="e.g., 92.30" step="0.01">
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="addCountry()">+ Add Country</button>
+            </div>
+
+            <div class="add-section">
+                <h3 style="margin-bottom: 20px; color: #2c3e50;">👥 Manage Agents</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Agent Name</label>
+                        <input type="text" id="agentName" placeholder="e.g., Agent A">
+                    </div>
+                    <div class="form-group">
+                        <label>WhatsApp Number(s) (comma-separated)</label>
+                        <input type="text" id="agentWhatsApp" placeholder="e.g., +911234567890, +911234567891">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="addAgent()">+ Add Agent</button>
+                <button class="btn btn-warning" onclick="removeLastAgent()" style="margin-left: 10px;">- Remove Last Agent</button>
+            </div>
+
+            <div class="table-container">
+                <table id="ratesTable">
+                    <thead id="tableHeader">
+                        <!-- Dynamic header will be inserted here -->
+                    </thead>
+                    <tbody id="ratesTableBody">
+                        <!-- Dynamic content will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="calculationsTab" class="tab-content">
+            <div class="calculation-result">
+                <h3>📊 Currency Rate Calculations (Base Rate - Agent Rate)</h3>
+                <div class="calc-table-container">
+                    <table class="calc-table" id="calculationTable">
+                        <thead id="calcTableHeader">
+                            <!-- Dynamic header will be inserted here -->
+                        </thead>
+                        <tbody id="calcTableBody">
+                            <!-- Calculation results will be displayed here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-success" onclick="sendAllToWhatsApp()" style="font-size: 1.2rem; padding: 15px 30px;">
+                        📱 Send Selected Updates to WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="floating-calculate-btn" onclick="calculateAndShow()" title="View Calculations">
+        🧮
+    </button>
+
+    <!-- Modal for WhatsApp Numbers -->
+    <div id="whatsappModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalAgentName">Manage WhatsApp Numbers</h3>
+            <div id="whatsappNumbersList">
+                <!-- Dynamic list of numbers will be inserted here -->
+            </div>
+            <button class="btn add-number" onclick="addWhatsAppNumber()">+ Add Number</button>
+            <div class="modal-actions">
+                <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-success" onclick="saveAndSend()">Save & Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global data storage
+        let countriesData = [];
+        let agentsData = [
+            { name: "Agent A", whatsappNumbers: ["+919944547680", "+919876543210"] },
+            { name: "Agent B", whatsappNumbers: ["+911234567891"] },
+            { name: "Agent C", whatsappNumbers: ["+911234567892"] }
+        ];
+        let currentAgentIndex = null;
+        let selectedRates = []; // To store checkbox states
+
+        // Initialize with sample data
+        function initializeSampleData() {
+            countriesData = [
+                {
+                    id: 1,
+                    country: "India",
+                    currencyRate: 92.30,
+                    agentRates: [0.10, 0.23, 0.30],
+                    lastEdited: new Date().toLocaleString()
+                },
+                {
+                    id: 2,
+                    country: "USA",
+                    currencyRate: 1.00,
+                    agentRates: [0.05, 0.15, 0.25],
+                    lastEdited: new Date().toLocaleString()
+                },
+                {
+                    id: 3,
+                    country: "UAE",
+                    currencyRate: 3.67,
+                    agentRates: [0.02, 0.08, 0.12],
+                    lastEdited: new Date().toLocaleString()
+                }
+            ];
+            // Initialize selectedRates for each country and agent
+            selectedRates = countriesData.map(country => 
+                agentsData.map(() => false)
+            );
+            renderTable();
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            if (tabName === 'calculations') {
+                renderCalculationTable();
+            }
+        }
+
+        // Add new agent
+        function addAgent() {
+            const agentName = document.getElementById('agentName').value.trim();
+            const agentWhatsAppInput = document.getElementById('agentWhatsApp').value.trim();
+            
+            if (!agentName || !agentWhatsAppInput) {
+                alert('Please fill in agent name and at least one WhatsApp number');
+                return;
+            }
+
+            // Split WhatsApp numbers by comma and trim whitespace
+            const whatsappNumbers = agentWhatsAppInput.split(',').map(num => num.trim()).filter(num => num);
+            if (whatsappNumbers.length === 0 || whatsappNumbers.length > 2) {
+                alert('Please provide one or two valid WhatsApp numbers, separated by a comma');
+                return;
+            }
+
+            // Validate WhatsApp numbers format
+            const validNumbers = whatsappNumbers.filter(num => {
+                const phoneRegex = /^\+\d{10,15}$/;
+                return phoneRegex.test(num);
+            });
+
+            if (validNumbers.length === 0) {
+                alert('Please provide valid WhatsApp numbers (format: +1234567890)');
+                return;
+            }
+
+            agentsData.push({ 
+                name: agentName, 
+                whatsappNumbers: validNumbers
+            });
+            
+            // Add default rate (0.10) for this agent to all existing countries
+            countriesData.forEach(country => {
+                country.agentRates.push(0.10);
+                country.lastEdited = new Date().toLocaleString();
+            });
+
+            // Update selectedRates to include new agent
+            selectedRates.forEach(row => row.push(false));
+
+            document.getElementById('agentName').value = '';
+            document.getElementById('agentWhatsApp').value = '';
+            renderTable();
+            console.log('New agent added:', agentsData[agentsData.length - 1]);
+        }
+
+        // Remove last agent
+        function removeLastAgent() {
+            if (agentsData.length <= 1) {
+                alert('You must have at least one agent');
+                return;
+            }
+
+            if (confirm('Are you sure you want to remove the last agent?')) {
+                agentsData.pop();
+                
+                // Remove the last agent rate from all countries
+                countriesData.forEach(country => {
+                    country.agentRates.pop();
+                    country.lastEdited = new Date().toLocaleString();
+                });
+                
+                // Update selectedRates to remove last agent
+                selectedRates.forEach(row => row.pop());
+                
+                renderTable();
+            }
+        }
+
+        // Add new country
+        function addCountry() {
+            const countryName = document.getElementById('countryName').value.trim();
+            const currencyRate = parseFloat(document.getElementById('currencyRate').value);
+            
+            if (!countryName || !currencyRate) {
+                alert('Please fill in country name and currency rate');
+                return;
+            }
+
+            // Create default agent rates (0.10 for each agent)
+            const agentRates = agentsData.map(() => 0.10);
+
+            const newCountry = {
+                id: Date.now(),
+                country: countryName,
+                currencyRate: currencyRate,
+                agentRates: agentRates,
+                lastEdited: new Date().toLocaleString()
+            };
+
+            countriesData.push(newCountry);
+            // Add new row to selectedRates
+            selectedRates.push(agentsData.map(() => false));
+            document.getElementById('countryName').value = '';
+            document.getElementById('currencyRate').value = '';
+            renderTable();
+        }
+
+        // Render main table
+        function renderTable() {
+            renderTableHeader();
+            renderTableBody();
+        }
+
+        function renderTableHeader() {
+            const header = document.getElementById('tableHeader');
+            let headerHTML = '<tr><th>Country</th><th>Currency Rate</th>';
+            
+            agentsData.forEach((agent, index) => {
+                headerHTML += `
+                    <th class="clickable" onclick="showWhatsAppModal(${index})">
+                        <div class="agent-header">
+                            <div class="agent-name">${agent.name}</div>
+                            <div class="agent-subtitle">Rate</div>
+                        </div>
+                    </th>`;
+            });
+            
+            headerHTML += '<th>Actions</th></tr>';
+            header.innerHTML = headerHTML;
+        }
+
+        function renderTableBody() {
+            const tbody = document.getElementById('ratesTableBody');
+            tbody.innerHTML = '';
+
+            countriesData.forEach(country => {
+                const row = document.createElement('tr');
+                
+                let rowHTML = `
+                    <td>
+                        <input type="text" value="${country.country}" onchange="updateCountryName(${country.id}, this.value)" class="editable-input">
+                        <div class="last-edited">Last edited: ${country.lastEdited}</div>
+                    </td>
+                    <td>
+                        <input type="number" value="${country.currencyRate}" onchange="updateCurrencyRate(${country.id}, this.value)" class="editable-input currency-input" step="0.01">
+                    </td>
+                `;
+
+                agentsData.forEach((agent, index) => {
+                    rowHTML += `
+                        <td>
+                            <input type="number" value="${country.agentRates[index] || 0}" onchange="updateAgentRate(${country.id}, ${index}, this.value)" class="editable-input agent-input" step="0.01">
+                        </td>
+                    `;
+                });
+
+                rowHTML += `
+                    <td>
+                        <button class="delete-btn" onclick="deleteCountry(${country.id})">Delete</button>
+                    </td>
+                `;
+
+                row.innerHTML = rowHTML;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update functions
+        function updateCountryName(countryId, newName) {
+            const country = countriesData.find(c => c.id === countryId);
+            if (country) {
+                country.country = newName;
+                country.lastEdited = new Date().toLocaleString();
+            }
+        }
+
+        function updateCurrencyRate(countryId, newRate) {
+            const country = countriesData.find(c => c.id === countryId);
+            if (country) {
+                country.currencyRate = parseFloat(newRate);
+                country.lastEdited = new Date().toLocaleString();
+            }
+        }
+
+        function updateAgentRate(countryId, agentIndex, newRate) {
+            const country = countriesData.find(c => c.id === countryId);
+            if (country) {
+                country.agentRates[agentIndex] = parseFloat(newRate);
+                country.lastEdited = new Date().toLocaleString();
+            }
+        }
+
+        function deleteCountry(countryId) {
+            if (confirm('Are you sure you want to delete this country?')) {
+                const index = countriesData.findIndex(c => c.id === countryId);
+                countriesData = countriesData.filter(c => c.id !== countryId);
+                selectedRates.splice(index, 1);
+                renderTable();
+            }
+        }
+
+        // Modal functions
+        function showWhatsAppModal(agentIndex) {
+            currentAgentIndex = agentIndex;
+            const agent = agentsData[agentIndex];
+            if (!agent) return;
+
+            const modal = document.getElementById('whatsappModal');
+            const modalTitle = document.getElementById('modalAgentName');
+            const numbersList = document.getElementById('whatsappNumbersList');
+
+            modalTitle.textContent = `Manage WhatsApp Numbers for ${agent.name}`;
+            numbersList.innerHTML = '';
+
+            agent.whatsappNumbers.forEach((number, index) => {
+                const div = document.createElement('div');
+                div.className = 'number-item';
+                div.innerHTML = `
+                    <input type="text" value="${number}" id="numberInput${index}" readonly>
+                    <button class="edit-btn" onclick="toggleEdit(${index})">Edit</button>
+                    <button class="remove-btn" onclick="removeWhatsAppNumber(${index})">Remove</button>
+                `;
+                numbersList.appendChild(div);
+            });
+
+            modal.style.display = 'flex';
+        }
+
+        function toggleEdit(index) {
+            const input = document.getElementById(`numberInput${index}`);
+            const isReadOnly = input.readOnly;
+            input.readOnly = !isReadOnly;
+            input.focus();
+        }
+
+        function removeWhatsAppNumber(index) {
+            const agent = agentsData[currentAgentIndex];
+            if (agent.whatsappNumbers.length <= 1) {
+                alert('At least one WhatsApp number is required.');
+                return;
+            }
+            agent.whatsappNumbers.splice(index, 1);
+            showWhatsAppModal(currentAgentIndex);
+        }
+
+        function addWhatsAppNumber() {
+            const agent = agentsData[currentAgentIndex];
+            if (agent.whatsappNumbers.length >= 2) {
+                alert('Maximum of 2 WhatsApp numbers allowed.');
+                return;
+            }
+            const newNumber = prompt('Enter new WhatsApp number (e.g., +911234567890):');
+            if (newNumber && newNumber.trim()) {
+                const trimmedNumber = newNumber.trim();
+                const phoneRegex = /^\+\d{10,15}$/;
+                if (!phoneRegex.test(trimmedNumber)) {
+                    alert('Please enter a valid WhatsApp number (format: +1234567890)');
+                    return;
+                }
+                if (!agent.whatsappNumbers.includes(trimmedNumber)) {
+                    agent.whatsappNumbers.push(trimmedNumber);
+                    showWhatsAppModal(currentAgentIndex);
+                }
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('whatsappModal');
+            modal.style.display = 'none';
+            currentAgentIndex = null;
+        }
+
+        function saveAndSend() {
+            const agent = agentsData[currentAgentIndex];
+            const numbersList = document.getElementById('whatsappNumbersList');
+            const inputs = numbersList.querySelectorAll('input');
+            const updatedNumbers = [];
+
+            inputs.forEach(input => {
+                const value = input.value.trim();
+                if (value) {
+                    const phoneRegex = /^\+\d{10,15}$/;
+                    if (phoneRegex.test(value)) {
+                        updatedNumbers.push(value);
+                    }
+                }
+            });
+
+            if (updatedNumbers.length === 0) {
+                alert('At least one valid WhatsApp number is required.');
+                return;
+            }
+
+            agent.whatsappNumbers = updatedNumbers;
+            closeModal();
+            renderTableHeader();
+            sendAllCountriesToAgent(currentAgentIndex);
+        }
+
+        // Calculation table
+        function renderCalculationTable() {
+            renderCalculationHeader();
+            renderCalculationBody();
+        }
+
+        function renderCalculationHeader() {
+            const header = document.getElementById('calcTableHeader');
+            let headerHTML = '<tr><th>Country</th><th>Base Rate</th>';
+            
+            agentsData.forEach(agent => {
+                headerHTML += `<th>${agent.name}<br><small>Currency Rate</small></th>`;
+            });
+            
+            header.innerHTML = headerHTML;
+        }
+
+        function renderCalculationBody() {
+            const tbody = document.getElementById('calcTableBody');
+            tbody.innerHTML = '';
+
+            // Render country rows
+            countriesData.forEach((country, countryIndex) => {
+                const row = document.createElement('tr');
+                
+                let rowHTML = `
+                    <td><strong>${country.country}</strong></td>
+                    <td><strong style="color: #27ae60;">${country.currencyRate.toFixed(2)}</strong></td>
+                `;
+
+                agentsData.forEach((agent, agentIndex) => {
+                    const currencyRate = country.currencyRate - (country.agentRates[agentIndex] || 0);
+                    rowHTML += `
+                        <td>
+                            <input type="checkbox" class="rate-checkbox" 
+                                onchange="updateSelectedRate(${countryIndex}, ${agentIndex}, this.checked)"
+                                ${selectedRates[countryIndex][agentIndex] ? 'checked' : ''}>
+                            <span class="currency-rate">${currencyRate.toFixed(2)}</span>
+                        </td>`;
+                });
+
+                row.innerHTML = rowHTML;
+                tbody.appendChild(row);
+            });
+
+            // Add final row with Send buttons for each agent
+            const finalRow = document.createElement('tr');
+            let finalRowHTML = `
+                <td colspan="2"><strong>Send Selected Rates</strong></td>
+            `;
+            agentsData.forEach((agent, index) => {
+                finalRowHTML += `
+                    <td>
+                        <button class="whatsapp-btn" onclick="sendAllCountriesToAgent(${index})">
+                            📱 Send
+                        </button>
+                    </td>
+                `;
+            });
+            finalRow.innerHTML = finalRowHTML;
+            tbody.appendChild(finalRow);
+        }
+
+        // Update selectedRates when checkbox state changes
+        function updateSelectedRate(countryIndex, agentIndex, isChecked) {
+            if (!selectedRates[countryIndex] || selectedRates[countryIndex][agentIndex] === undefined) {
+                console.error(`Invalid selectedRates access: countryIndex=${countryIndex}, agentIndex=${agentIndex}`);
+                return;
+            }
+            selectedRates[countryIndex][agentIndex] = isChecked;
+            console.log(`Updated selectedRates[${countryIndex}][${agentIndex}] = ${isChecked}`);
+        }
+
+        function calculateAndShow() {
+            switchTab('calculations');
+            document.querySelectorAll('.nav-tab')[1].click();
+        }
+
+        function sendAllCountriesToAgent(agentIndex) {
+            try {
+                console.log(`Attempting to send message for agent index: ${agentIndex}`);
+                const agent = agentsData[agentIndex];
+                if (!agent) {
+                    throw new Error(`Agent at index ${agentIndex} not found`);
+                }
+
+                console.log(`Agent details:`, agent);
+
+                if (!agent.whatsappNumbers || agent.whatsappNumbers.length === 0) {
+                    throw new Error(`No WhatsApp numbers found for agent ${agent.name}`);
+                }
+
+                let message = `Currency Rate Update\n\n`;
+                let hasSelectedRates = false;
+
+                countriesData.forEach((country, countryIndex) => {
+                    if (selectedRates[countryIndex] && selectedRates[countryIndex][agentIndex]) {
+                        const currencyRate = country.currencyRate - (country.agentRates[agentIndex] || 0);
+                        message += `Country: ${country.country}\nCurrency Rate: ${currencyRate.toFixed(2)}\n\n`;
+                        hasSelectedRates = true;
+                    }
+                });
+
+                if (!hasSelectedRates) {
+                    alert(`No rates selected for ${agent.name}. Please select at least one rate.`);
+                    return;
+                }
+
+                message += `Source: Currency Rate Board`;
+                console.log(`Message to send:`, message);
+
+                // Send to all WhatsApp numbers for this agent
+                agent.whatsappNumbers.forEach((whatsappNumber, index) => {
+                    try {
+                        const cleanNumber = whatsappNumber.replace(/[^0-9+]/g, '');
+                        if (!cleanNumber.startsWith('+') || cleanNumber.length < 11) {
+                            throw new Error(`Invalid WhatsApp number format: ${whatsappNumber}`);
+                        }
+                        const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+                        console.log(`Opening WhatsApp URL for number ${index + 1}:`, whatsappUrl);
+                        window.open(whatsappUrl, '_blank');
+                    } catch (error) {
+                        console.error(`Error sending to WhatsApp number ${whatsappNumber}:`, error.message);
+                        alert(`Failed to send message to ${whatsappNumber}: ${error.message}`);
+                    }
+                });
+            } catch (error) {
+                console.error('Error in sendAllCountriesToAgent:', error.message);
+                alert(`Error sending message for ${agentsData[agentIndex]?.name || 'unknown agent'}: ${error.message}`);
+            }
+        }
+
+        function sendAllToWhatsApp() {
+            let hasSelectedRates = false;
+            selectedRates.forEach(row => {
+                if (row.some(selected => selected)) {
+                    hasSelectedRates = true;
+                }
+            });
+
+            if (!hasSelectedRates) {
+                alert('Please select at least one rate to send.');
+                return;
+            }
+
+            agentsData.forEach((agent, index) => {
+                sendAllCountriesToAgent(index);
+            });
+        }
+
+        // Initialize the application
+        window.addEventListener('load', function() {
+            initializeSampleData();
+            
+            // Simulate real-time updates
+            setInterval(function() {
+                const statusElement = document.getElementById('connectionStatus');
+                statusElement.textContent = 'Connected • Last sync: ' + new Date().toLocaleTimeString();
+            }, 30000);
+        });
+    </script>
+</body>
+</html>
