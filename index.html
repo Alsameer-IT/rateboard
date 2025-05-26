@@ -291,16 +291,23 @@
             color: #2c3e50;
         }
 
+        .calc-table th, .calc-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+            vertical-align: middle;
+            min-width: 120px;
+        }
+
+        .calc-table th:first-child, .calc-table td:first-child {
+            text-align: left;
+            min-width: 150px;
+        }
+
         .calc-table th {
             background: linear-gradient(135deg, #2c3e50, #34495e);
             color: white;
-            padding: 15px;
             font-weight: 500;
-        }
-
-        .calc-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
         }
 
         .calc-table tr:nth-child(even) {
@@ -311,6 +318,26 @@
             font-weight: bold;
             font-size: 1.1rem;
             color: #27ae60;
+        }
+
+        .rate-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 100%;
+            padding: 8px;
+        }
+
+        .rate-checkbox {
+            cursor: pointer;
+        }
+
+        .send-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
         }
 
         .whatsapp-btn {
@@ -382,11 +409,6 @@
             transform: scale(1.05);
         }
 
-        .rate-checkbox {
-            margin-right: 8px;
-            cursor: pointer;
-        }
-
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
@@ -410,6 +432,15 @@
                 font-size: 0.85rem;
             }
 
+            .calc-table th, .calc-table td {
+                padding: 8px;
+                min-width: 80px;
+            }
+
+            .calc-table th:first-child, .calc-table td:first-child {
+                min-width: 100px;
+            }
+
             .editable-input {
                 max-width: 80px;
                 padding: 6px 8px;
@@ -428,7 +459,7 @@
         .agent-header {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
             gap: 5px;
         }
 
@@ -438,18 +469,16 @@
 
         .agent-subtitle {
             font-size: 0.8rem;
-            opacity: 0.8;
+            opacity: 0.4;
         }
 
-        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
             top: 0;
-            left: 0;
+            left: rgba(0, 0, 0, 0.5);
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -533,6 +562,32 @@
             justify-content: flex-end;
             gap: 10px;
         }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-align: center;
+            margin-left: 10px;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .upload-area p {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -564,7 +619,16 @@
                         <input type="number" id="currencyRate" placeholder="e.g., 92.30" step="0.01">
                     </div>
                 </div>
-                <button class="btn btn-success" onclick="addCountry()">+ Add Country</button>
+                <div class="upload-area">
+                    <input type="file" id="excelUpload" accept=".xlsx,.xls" style="display: none;" onchange="uploadExcelFile()">
+                    <button class="btn btn-success" onclick="addCountry()">+ Add Country</button>
+                    <button class="upload-btn" onclick="document.getElementById('excelUpload').click()">Upload Excel</button>
+                    <p>
+                        <strong>Excel Format Requirements:</strong><br>
+                        • Columns: Settlement Currency, Payout Currency, Rate<br>
+                        • Example: USD, INR, 83.50 or SGD, AUD, 1.19
+                    </p>
+                </div>
             </div>
 
             <div class="add-section">
@@ -636,6 +700,8 @@
         </div>
     </div>
 
+    <!-- Include SheetJS library for Excel parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         // Global data storage
         let countriesData = [];
@@ -677,6 +743,175 @@
                 agentsData.map(() => false)
             );
             renderTable();
+        }
+
+        // Upload Excel file
+        function uploadExcelFile() {
+            const fileInput = document.getElementById('excelUpload');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select an Excel file to upload.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    processExcelData(jsonData);
+                    
+                } catch (error) {
+                    console.error('Excel processing error:', error);
+                    alert('Error reading Excel file: ' + error.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Process Excel data
+        function processExcelData(data) {
+            if (!data || data.length === 0) {
+                alert('Excel file appears to be empty');
+                return;
+            }
+
+            const newCountries = [];
+            let successCount = 0;
+            
+            let allValues = [];
+            data.forEach(row => {
+                if (Array.isArray(row)) {
+                    allValues = allValues.concat(row.filter(cell => cell !== undefined && cell !== null && cell !== ''));
+                } else if (row !== undefined && row !== null && row !== '') {
+                    allValues.push(row);
+                }
+            });
+            
+            if (allValues.length >= 3) {
+                let patternDetected = false;
+                
+                for (let i = 0; i < allValues.length - 2; i += 3) {
+                    const settlement = allValues[i];
+                    const payout = allValues[i + 1];
+                    const rate = allValues[i + 2];
+                    
+                    if (typeof settlement === 'string' && settlement.toLowerCase().includes('currency')) continue;
+                    if (typeof payout === 'string' && payout.toLowerCase().includes('currency')) continue;
+                    if (typeof rate === 'string' && rate.toLowerCase().includes('rate')) continue;
+                    
+                    if (settlement && payout && rate) {
+                        const rateValue = parseFloat(rate.toString().replace(/[,\s]/g, ''));
+                        
+                        if (!isNaN(rateValue) && rateValue > 0) {
+                            let countryName = payout.toString().trim();
+                            
+                            const currencyMap = {
+                                'AED': 'UAE', 'AUD': 'Australia', 'BDT': 'Bangladesh', 'BRL': 'Brazil',
+                                'CNY': 'China', 'EGP': 'Egypt', 'EUR': 'Europe', 'GBP': 'UK',
+                                'GHS': 'Ghana', 'HKD': 'Hong Kong', 'IDR': 'Indonesia', 'INR': 'India',
+                                'JPY': 'Japan', 'KHR': 'Cambodia', 'KRW': 'South Korea', 'LKR': 'Sri Lanka',
+                                'MNT': 'Mongolia', 'MYR': 'Malaysia', 'NGN': 'Nigeria', 'NPR': 'Nepal',
+                                'PHP': 'Philippines', 'PKR': 'Pakistan', 'SAR': 'Saudi Arabia', 'SGD': 'Singapore',
+                                'THB': 'Thailand', 'TRY': 'Turkey', 'UGX': 'Uganda', 'USD': 'USA', 'VND': 'Vietnam'
+                            };
+                            
+                            if (currencyMap[countryName]) {
+                                countryName = currencyMap[countryName];
+                            }
+                            
+                            newCountries.push({
+                                country: countryName,
+                                currencyRate: rateValue,
+                                agentRates: agentsData.map(() => 0.10), // Default agent rate
+                                lastEdited: new Date().toLocaleString()
+                            });
+                            successCount++;
+                            patternDetected = true;
+                        }
+                    }
+                }
+                
+                if (!patternDetected) {
+                    for (let i = 0; i < allValues.length - 1; i++) {
+                        const current = allValues[i];
+                        const next = allValues[i + 1];
+                        
+                        if (typeof current === 'string' && current.length === 3 && 
+                            /^[A-Z]{3}$/.test(current) && !isNaN(parseFloat(next))) {
+                            
+                            const rate = parseFloat(next.toString().replace(/[,\s]/g, ''));
+                            if (rate > 0) {
+                                let countryName = current;
+                                
+                                const currencyMap = {
+                                    'AED': 'UAE', 'AUD': 'Australia', 'BDT': 'Bangladesh', 'BRL': 'Brazil',
+                                    'CNY': 'China', 'EGP': 'Egypt', 'EUR': 'Europe', 'GBP': 'UK',
+                                    'GHS': 'Ghana', 'HKD': 'Hong Kong', 'IDR': 'Indonesia', 'INR': 'India',
+                                    'JPY': 'Japan', 'KHR': 'Cambodia', 'KRW': 'South Korea', 'LKR': 'Sri Lanka',
+                                    'MNT': 'Mongolia', 'MYR': 'Malaysia', 'NGN': 'Nigeria', 'NPR': 'Nepal',
+                                    'PHP': 'Philippines', 'PKR': 'Pakistan', 'SAR': 'Saudi Arabia', 'SGD': 'Singapore',
+                                    'THB': 'Thailand', 'TRY': 'Turkey', 'UGX': 'Uganda', 'USD': 'USA', 'VND': 'Vietnam'
+                                };
+                                
+                                if (currencyMap[countryName]) {
+                                    countryName = currencyMap[countryName];
+                                }
+                                
+                                newCountries.push({
+                                    country: countryName,
+                                    currencyRate: rate,
+                                    agentRates: agentsData.map(() => 0.10), // Default agent rate
+                                    lastEdited: new Date().toLocaleString()
+                                });
+                                successCount++;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (newCountries.length === 0) {
+                alert('No valid currency rate data found. Please check your Excel file format.');
+                return;
+            }
+            
+            // Remove duplicates based on country name and add to existing data
+            const uniqueCountries = [];
+            const seenCountries = new Set();
+            
+            newCountries.forEach(country => {
+                if (!seenCountries.has(country.country.toLowerCase())) {
+                    seenCountries.add(country.country.toLowerCase());
+                    uniqueCountries.push(country);
+                }
+            });
+            
+            // Add new data, update existing countries
+            uniqueCountries.forEach(newCountry => {
+                const existingIndex = countriesData.findIndex(c => 
+                    c.country.toLowerCase() === newCountry.country.toLowerCase()
+                );
+                
+                if (existingIndex >= 0) {
+                    countriesData[existingIndex].currencyRate = newCountry.currencyRate;
+                    countriesData[existingIndex].lastEdited = newCountry.lastEdited;
+                } else {
+                    countriesData.push({
+                        id: Date.now() + countriesData.length,
+                        ...newCountry
+                    });
+                    selectedRates.push(agentsData.map(() => false));
+                }
+            });
+            
+            renderTable();
+            renderCalculationTable();
+            alert(`Successfully processed ${uniqueCountries.length} currency rates from Excel file!`);
+            document.getElementById('excelUpload').value = ''; // Clear file input
         }
 
         // Tab switching
@@ -790,29 +1025,24 @@
             document.getElementById('countryName').value = '';
             document.getElementById('currencyRate').value = '';
             renderTable();
+            renderCalculationTable();
         }
 
-        // Render main table
-        function renderTable() {
-            renderTableHeader();
-            renderTableBody();
-        }
-
+        // Render Rate Management table (transposed)
         function renderTableHeader() {
             const header = document.getElementById('tableHeader');
-            let headerHTML = '<tr><th>Country</th><th>Currency Rate</th>';
+            let headerHTML = '<tr><th>Country</th>'; // Label "Country" in first cell
             
-            agentsData.forEach((agent, index) => {
+            // Countries as column headers with last edited timestamp
+            countriesData.forEach(country => {
                 headerHTML += `
-                    <th class="clickable" onclick="showWhatsAppModal(${index})">
-                        <div class="agent-header">
-                            <div class="agent-name">${agent.name}</div>
-                            <div class="agent-subtitle">Rate</div>
-                        </div>
+                    <th>
+                        ${country.country}
+                        <div class="last-edited">Last edited: ${country.lastEdited}</div>
                     </th>`;
             });
             
-            headerHTML += '<th>Actions</th></tr>';
+            headerHTML += '</tr>';
             header.innerHTML = headerHTML;
         }
 
@@ -820,36 +1050,52 @@
             const tbody = document.getElementById('ratesTableBody');
             tbody.innerHTML = '';
 
+            // Row for Currency Rate
+            let currencyRateRow = '<tr><td>Currency Rate</td>';
             countriesData.forEach(country => {
-                const row = document.createElement('tr');
-                
-                let rowHTML = `
-                    <td>
-                        <input type="text" value="${country.country}" onchange="updateCountryName(${country.id}, this.value)" class="editable-input">
-                        <div class="last-edited">Last edited: ${country.lastEdited}</div>
-                    </td>
+                currencyRateRow += `
                     <td>
                         <input type="number" value="${country.currencyRate}" onchange="updateCurrencyRate(${country.id}, this.value)" class="editable-input currency-input" step="0.01">
-                    </td>
-                `;
+                    </td>`;
+            });
+            currencyRateRow += '</tr>';
+            tbody.innerHTML += currencyRateRow;
 
-                agentsData.forEach((agent, index) => {
-                    rowHTML += `
+            // Rows for each agent
+            agentsData.forEach((agent, agentIndex) => {
+                let row = `
+                    <tr>
+                        <td class="clickable" onclick="showWhatsAppModal(${agentIndex})">
+                            <div class="agent-header">
+                                <div class="agent-name">${agent.name}</div>
+                                <div class="agent-subtitle">Rate</div>
+                            </div>
+                        </td>`;
+                countriesData.forEach((country, countryIndex) => {
+                    row += `
                         <td>
-                            <input type="number" value="${country.agentRates[index] || 0}" onchange="updateAgentRate(${country.id}, ${index}, this.value)" class="editable-input agent-input" step="0.01">
-                        </td>
-                    `;
+                            <input type="number" value="${country.agentRates[agentIndex] || 0}" onchange="updateAgentRate(${country.id}, ${agentIndex}, this.value)" class="editable-input agent-input" step="0.01">
+                        </td>`;
                 });
+                row += '</tr>';
+                tbody.innerHTML += row;
+            });
 
-                rowHTML += `
+            // Row for Delete actions
+            let deleteRow = '<tr><td>Actions</td>';
+            countriesData.forEach(country => {
+                deleteRow += `
                     <td>
                         <button class="delete-btn" onclick="deleteCountry(${country.id})">Delete</button>
-                    </td>
-                `;
-
-                row.innerHTML = rowHTML;
-                tbody.appendChild(row);
+                    </td>`;
             });
+            deleteRow += '</tr>';
+            tbody.innerHTML += deleteRow;
+        }
+
+        function renderTable() {
+            renderTableHeader();
+            renderTableBody();
         }
 
         // Update functions
@@ -858,6 +1104,8 @@
             if (country) {
                 country.country = newName;
                 country.lastEdited = new Date().toLocaleString();
+                renderTable();
+                renderCalculationTable();
             }
         }
 
@@ -866,6 +1114,8 @@
             if (country) {
                 country.currencyRate = parseFloat(newRate);
                 country.lastEdited = new Date().toLocaleString();
+                renderTable();
+                renderCalculationTable();
             }
         }
 
@@ -874,6 +1124,8 @@
             if (country) {
                 country.agentRates[agentIndex] = parseFloat(newRate);
                 country.lastEdited = new Date().toLocaleString();
+                renderTable();
+                renderCalculationTable();
             }
         }
 
@@ -883,6 +1135,7 @@
                 countriesData = countriesData.filter(c => c.id !== countryId);
                 selectedRates.splice(index, 1);
                 renderTable();
+                renderCalculationTable();
             }
         }
 
@@ -981,10 +1234,11 @@
             agent.whatsappNumbers = updatedNumbers;
             closeModal();
             renderTableHeader();
+            renderCalculationTable();
             sendAllCountriesToAgent(currentAgentIndex);
         }
 
-        // Calculation table
+        // Calculation table (transposed)
         function renderCalculationTable() {
             renderCalculationHeader();
             renderCalculationBody();
@@ -992,12 +1246,15 @@
 
         function renderCalculationHeader() {
             const header = document.getElementById('calcTableHeader');
-            let headerHTML = '<tr><th>Country</th><th>Base Rate</th>';
+            let headerHTML = '<tr><th>Country</th>'; // Label "Country" in first cell
             
-            agentsData.forEach(agent => {
-                headerHTML += `<th>${agent.name}<br><small>Currency Rate</small></th>`;
+            // Countries as column headers
+            countriesData.forEach(country => {
+                headerHTML += `<th>${country.country}</th>`;
             });
-            
+            // Add Send column
+            headerHTML += '<th>Send</th>';
+            headerHTML += '</tr>';
             header.innerHTML = headerHTML;
         }
 
@@ -1005,46 +1262,53 @@
             const tbody = document.getElementById('calcTableBody');
             tbody.innerHTML = '';
 
-            // Render country rows
-            countriesData.forEach((country, countryIndex) => {
-                const row = document.createElement('tr');
-                
-                let rowHTML = `
-                    <td><strong>${country.country}</strong></td>
-                    <td><strong style="color: #27ae60;">${country.currencyRate.toFixed(2)}</strong></td>
-                `;
+            // Row for Base Rate
+            let baseRateRow = '<tr><td><strong>Base Rate</strong></td>';
+            countriesData.forEach(country => {
+                baseRateRow += `
+                    <td>
+                        <div class="rate-cell">
+                            <span class="currency-rate">${country.currencyRate.toFixed(2)}</span>
+                        </div>
+                    </td>`;
+            });
+            baseRateRow += '<td></td>'; // Empty cell for Send column
+            baseRateRow += '</tr>';
+            tbody.innerHTML += baseRateRow;
 
-                agentsData.forEach((agent, agentIndex) => {
-                    const currencyRate = country.currencyRate - (country.agentRates[agentIndex] || 0);
-                    rowHTML += `
+            // Rows for each agent
+            agentsData.forEach((agent, agentIndex) => {
+                let row = `
+                    <tr>
                         <td>
-                            <input type="checkbox" class="rate-checkbox" 
-                                onchange="updateSelectedRate(${countryIndex}, ${agentIndex}, this.checked)"
-                                ${selectedRates[countryIndex][agentIndex] ? 'checked' : ''}>
-                            <span class="currency-rate">${currencyRate.toFixed(2)}</span>
+                            <div class="agent-header">
+                                <div class="agent-name">${agent.name}</div>
+                                <div class="agent-subtitle">Currency Rate</div>
+                            </div>
+                        </td>`;
+                countriesData.forEach((country, countryIndex) => {
+                    const currencyRate = country.currencyRate - (country.agentRates[agentIndex] || 0);
+                    row += `
+                        <td>
+                            <div class="rate-cell">
+                                <input type="checkbox" class="rate-checkbox" 
+                                       onchange="updateSelectedRate(${countryIndex}, ${agentIndex}, this.checked)"
+                                       ${selectedRates[countryIndex][agentIndex] ? 'checked' : ''}>
+                                <span class="currency-rate">${currencyRate.toFixed(2)}</span>
+                            </div>
                         </td>`;
                 });
-
-                row.innerHTML = rowHTML;
-                tbody.appendChild(row);
-            });
-
-            // Add final row with Send buttons for each agent
-            const finalRow = document.createElement('tr');
-            let finalRowHTML = `
-                <td colspan="2"><strong>Send Selected Rates</strong></td>
-            `;
-            agentsData.forEach((agent, index) => {
-                finalRowHTML += `
+                row += `
                     <td>
-                        <button class="whatsapp-btn" onclick="sendAllCountriesToAgent(${index})">
-                            📱 Send
-                        </button>
-                    </td>
-                `;
+                        <div class="send-cell">
+                            <button class="whatsapp-btn" onclick="sendAllCountriesToAgent(${agentIndex})">
+                                📱 Send
+                            </button>
+                        </div>
+                    </td>`;
+                row += '</tr>';
+                tbody.innerHTML += row;
             });
-            finalRow.innerHTML = finalRowHTML;
-            tbody.appendChild(finalRow);
         }
 
         // Update selectedRates when checkbox state changes
@@ -1076,10 +1340,11 @@
                     throw new Error(`No WhatsApp numbers found for agent ${agent.name}`);
                 }
 
-                let message = `Currency Rate Update\n\n`;
+                let message = `Currency Rate Update for ${agent.name}\n\n`;
                 let hasSelectedRates = false;
 
                 countriesData.forEach((country, countryIndex) => {
+                    // Only include rates where the checkbox is selected
                     if (selectedRates[countryIndex] && selectedRates[countryIndex][agentIndex]) {
                         const currencyRate = country.currencyRate - (country.agentRates[agentIndex] || 0);
                         message += `Country: ${country.country}\nCurrency Rate: ${currencyRate.toFixed(2)}\n\n`;
@@ -1130,7 +1395,54 @@
             }
 
             agentsData.forEach((agent, index) => {
-                sendAllCountriesToAgent(index);
+                try {
+                    console.log(`Attempting to send message for agent index: ${index}`);
+                    if (!agent) {
+                        throw new Error(`Agent at index ${index} not found`);
+                    }
+
+                    if (!agent.whatsappNumbers || agent.whatsappNumbers.length === 0) {
+                        throw new Error(`No WhatsApp numbers found for agent ${agent.name}`);
+                    }
+
+                    let message = `Currency Rate Update\n\n`;
+                    let hasSelectedRatesForAgent = false;
+
+                    countriesData.forEach((country, countryIndex) => {
+                        if (selectedRates[countryIndex] && selectedRates[countryIndex][index]) {
+                            const currencyRate = country.currencyRate - (country.agentRates[index] || 0);
+                            message += `Country: ${country.country}\nCurrency Rate: ${currencyRate.toFixed(2)}\n\n`;
+                            hasSelectedRatesForAgent = true;
+                        }
+                    });
+
+                    if (!hasSelectedRatesForAgent) {
+                        console.log(`No rates selected for ${agent.name}. Skipping.`);
+                        return;
+                    }
+
+                    message += `Source: Currency Rate Board`;
+                    console.log(`Message to send for ${agent.name}:`, message);
+
+                    // Send to all WhatsApp numbers for this agent
+                    agent.whatsappNumbers.forEach((whatsappNumber, numIndex) => {
+                        try {
+                            const cleanNumber = whatsappNumber.replace(/[^0-9+]/g, '');
+                            if (!cleanNumber.startsWith('+') || cleanNumber.length < 11) {
+                                throw new Error(`Invalid WhatsApp number format: ${whatsappNumber}`);
+                            }
+                            const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+                            console.log(`Opening WhatsApp URL for ${agent.name}, number ${numIndex + 1}:`, whatsappUrl);
+                            window.open(whatsappUrl, '_blank');
+                        } catch (error) {
+                            console.error(`Error sending to WhatsApp number ${whatsappNumber}:`, error.message);
+                            alert(`Failed to send message to ${whatsappNumber}: ${error.message}`);
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error in sendAllToWhatsApp for agent index ' + index + ':', error.message);
+                    alert(`Error sending message for ${agent.name || 'unknown agent'}: ${error.message}`);
+                }
             });
         }
 
